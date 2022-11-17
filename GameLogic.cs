@@ -14,9 +14,12 @@ namespace FindMyMineUI
         public static int bombfound  = 0;
         public static int[][] bombpos = new int[11][];
         //
-        public static List<User> users = new List<User>();
-        public static Dictionary<int, User[]> usersinLobby= new Dictionary<int, User[]>();
 
+        public static List<User> users = new List<User>();
+
+        // <lobbyid,lobbyinfo>
+        public static Dictionary<int, User[]> usersinLobby= new Dictionary<int, User[]>();
+        public static Dictionary<int, lobbyInfo> lobbies = new Dictionary<int, lobbyInfo>();
         public static void Update()
         {
             ThreadManager.UpdateMain();
@@ -108,23 +111,6 @@ namespace FindMyMineUI
             ServerSend.SendState("1," + playerTurn);
         }
 
-        public static void GenerateBombPos()
-        {
-            bombpos = new int[11][];
-            Random rand = new Random();
-            int bombSpawned = 0;
-            while (bombSpawned < 11)
-            {
-                int[] newpos = new int[2] { rand.Next(0, 6), rand.Next(0, 6) };
-                if (!isIn(bombpos, newpos))
-                {
-                    bombpos[bombSpawned] = newpos;
-                    bombSpawned++;
-                }
-
-            }
-        }
-
         
         public static bool isIn(int[][] big, int[] small)
         {
@@ -174,14 +160,94 @@ namespace FindMyMineUI
         }
          */
 
+        public enum GameMode
+        {
+            Normal = 0,
+            SinglePlayer = 1,
+            Reverse = 2
+        }
+
+        public enum TileType
+        {
+            Normal = 0,
+            Bomb = 1,
+            Superbomb = 2,
+            Numbered = 3
+        }
+
         public class lobbyInfo
         {
-            public int lobby = -1;
             public User User1;
             public User User2;
             public int bombFound = 0;
-            public static int[][] bombpos;
+            public int totalBomb;
+            public GameMode gameMode;
+            public int width,height;
+
+            public bool SuperMine;
+            public bool MineSweeperRule;
+
+            public Dictionary<int[], Tile> tiles = new Dictionary<int[], Tile>();
+            public int playerTurn;
+
+            public lobbyInfo(User user1,User user2, int totalBomb, int width,int height,GameMode gameMode)
+            {
+                User1 = user1;
+                User2 = user2;
+                this.totalBomb = totalBomb;
+                this.gameMode = gameMode;
+                this.width = width;
+                this.height = height;
+
+                for(int y = 0; y < height; y++)
+                {
+                    for(int x = 0; x < width; x++)
+                    {
+                        int[] position = { x, y };
+                        tiles.Add(position, new Tile(x,y));
+                    }
+                }
+
+                generateBomb();
+            }
+
+            public void generateBomb()
+            {
+
+                //TO DO add super bombs
+
+                Random rand = new Random();
+                int bombSpawned = 0;
+                while (bombSpawned < totalBomb)
+                {
+                    int[] newpos = new int[2] { rand.Next(0, width), rand.Next(0, height) };
+                    if (tiles[newpos].type != TileType.Bomb)
+                    {
+                        tiles[newpos].type = TileType.Bomb;
+                        bombSpawned++;
+                    }
+
+                }
+
+            }
+
+
         }
+
+        public class Tile
+        {
+            public int posx;
+            public int posy;
+            public TileType type = TileType.Normal;
+            public int surroundingBomb;
+            public Tile(int posx, int posy)
+            {
+                this.posx = posx;
+                this.posy = posy;
+            }
+        }
+
+
         public class User {
             public string name;
             public int Id = -1;
