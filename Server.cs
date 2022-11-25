@@ -16,15 +16,18 @@ namespace FindMyMineUI
         public static Dictionary<int, Client> clients = new Dictionary<int, Client>();
         public delegate void PacketHandler(int _fromClient, Packet _packet);
         public static Dictionary<int, PacketHandler> packetHandlers;
-        private static string IPADDRESS = "192.168.75.156";
+        private static string IPADDRESS = "192.168.22.156";
         private static TcpListener tcpListener;
         public static TextBox textbox;
         public static ListView playerOnline;
+        public static TextBox noPlayer;
         public static bool isRunning;
-        public Server(TextBox txb,ListView lsv)
+        static int noplayeronline = 1;
+        public Server(TextBox txb,ListView lsv,TextBox noplayer)
         {
             textbox = txb;
             playerOnline = lsv;
+            noPlayer = noplayer;
             TextBox.CheckForIllegalCrossThreadCalls = false;
             ListView.CheckForIllegalCrossThreadCalls = false;
         }
@@ -46,6 +49,9 @@ namespace FindMyMineUI
         public static void AddPlayerOnline(string username)
         {
             playerOnline.Items.Add(username);
+            noPlayer.Text = noplayeronline.ToString();
+            noplayeronline++;
+
         }
         public static void Start(int _maxPlayers, int _port)
         {
@@ -92,6 +98,8 @@ namespace FindMyMineUI
                 { (int)ClientPackets.welcomeReceived, ServerHandle.WelcomeReceived },
                 { (int)ClientPackets.clickpos, ServerHandle.GetClickPos },
                 {(int)ClientPackets.lobby, ServerHandle.UserJoinLobby },
+                {(int)ClientPackets.chat, ServerHandle.GetChatMessage},
+                {(int)ClientPackets.state, ServerHandle.GetUserState}
             };
             UpdateText("Initialized packets.");
         }

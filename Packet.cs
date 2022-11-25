@@ -7,11 +7,13 @@ namespace FindMyMineUI
     /// <summary>Sent from server to client.</summary>
     public enum ServerPackets
     {
+        error = 0,
         welcome = 1,
         clickpos = 2,
         genericinfo = 3,
         state = 4,
-        lobby = 5
+        lobby = 5,
+        chat = 6
     }
 
     /// <summary>Sent from client to server.</summary>
@@ -21,8 +23,7 @@ namespace FindMyMineUI
         clickpos = 2,
         lobby = 3,
         state = 4,
-        boardinfo = 5,
-        chat = 6
+        chat = 5
     }
 
     public class Packet : IDisposable

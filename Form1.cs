@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
+using System.Linq.Expressions;
 
 namespace FindMyMineUI
 {
@@ -18,7 +19,7 @@ namespace FindMyMineUI
         public Form1()
         {
             InitializeComponent();
-            Server server = new Server(textBox1, listView1);
+            Server server = new Server(textBox1, listView1,textBox2);
         }
 
         public void updateTextBox(string message)
@@ -29,23 +30,29 @@ namespace FindMyMineUI
         //start server
         private void button1_Click(object sender, EventArgs e)
         {
-            if (!Server.isRunning)
+            try
             {
-                Server.Start(40, 26950);
-                Server.isRunning = true;
+                if (!Server.isRunning)
+                {
+                    Server.Start(40, 26950);
+                    Server.isRunning = true;
 
-                Server.UpdateText($"Main thread started. Running at {Constants.TICKS_PER_SEC} ticks per second.");
-                DateTime _nextLoop = DateTime.Now;
-                GameLogic.GenerateBombPos();
-                Thread t = new Thread(MainThread);
-                t.Name = "Server Listener Thread";
-                t.IsBackground = true;
-                t.Start();
+                    Server.UpdateText($"Main thread started. Running at {Constants.TICKS_PER_SEC} ticks per second.");
+                    DateTime _nextLoop = DateTime.Now;
+                    Thread t = new Thread(MainThread);
+                    t.Name = "Server Listener Thread";
+                    t.IsBackground = true;
+                    t.Start();
 
+                }
+                else
+                {
+                    textBox1.Text += "Server already running!" + "\r\n";
+                }
             }
-            else
+            catch(Exception ex)
             {
-                textBox1.Text += "Server already running!" + "\r\n";
+                textBox1.Text += "Error! Invalid IP." + "\r\n";
             }
         }
 
@@ -59,12 +66,19 @@ namespace FindMyMineUI
         private void button3_Click(object sender, EventArgs e)
         {
             ServerSend.SendState("0");
+            foreach(GameLogic.Lobby lobby in GameLogic.lobbies.Values)
+            {
+                lobby.createBoard();
+                lobby.resetScore();
+                lobby.randomizeTurn();
+                GameLogic.SendUserGenericData(lobby.User1.Id);
+                GameLogic.SendUserGenericData(lobby.User2.Id);
+            }
         }
 
         private static void MainThread()
         {
             DateTime _nextLoop = DateTime.Now;
-            GameLogic.GenerateBombPos();
             while (Server.isRunning)
             {
                 while (_nextLoop < DateTime.Now)
@@ -80,5 +94,6 @@ namespace FindMyMineUI
             }
 
         }
+
     }
 }

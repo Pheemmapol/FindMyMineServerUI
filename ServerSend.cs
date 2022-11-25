@@ -44,32 +44,24 @@ namespace FindMyMineUI
             }
         }
 
-
-        public static void SendClickPos(int clientclicked,string _msg)
+        public static void Error(int _client,int error)
         {
-
-            string[] pos = _msg.Split(',');
-            int isbomb = 0;
-            if (Int32.Parse(pos[0]) != -1)
+            using (Packet _packet = new Packet((int)ServerPackets.error))
             {
-                if (GameLogic.isIn(GameLogic.bombpos, new int[] { Int32.Parse(pos[0]), Int32.Parse(pos[1]) }))
-                {
-                    GameLogic.bombfound++;
-                    GameLogic.GetUserFromId(clientclicked).score++;
-                    isbomb = 1;
-                }
-                if (GameLogic.bombfound == 11)
-                {
-                    GameLogic.GameOver(0);
-                }
+                _packet.Write(error);
+
+                SendTCPData(_client, _packet);
             }
+        }
+ 
+
+        public static void ClickInfo(string _msg)
+        {
             using (Packet _packet = new Packet((int)ServerPackets.clickpos))
             {
-                _packet.Write(_msg+","+isbomb);
+                _packet.Write(_msg);
                 SendTCPDataToAll(_packet);
             }
-
-
         }
         public static void SendGenericInfo(int client, string _msg)
         {
@@ -96,12 +88,40 @@ namespace FindMyMineUI
                 SendTCPDataToAll(_packet);
             }
         }
+        public static void SendState(int client ,string _msg)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.state))
+            {
+                _packet.Write(_msg);
+                SendTCPData(client, _packet);
+            }
+        }
+        public static void SendStateToUser(int _client,string _msg)
+        {
+            using (Packet _packet = new Packet((int)ServerPackets.state))
+            {
+                _packet.Write(_msg);
+                SendTCPData(_client,_packet);
+            }
+        }
         public static void SendUserToLobby(string _msg)
         {
             using (Packet _packet = new Packet((int)ServerPackets.lobby))
             {
                 _packet.Write(_msg);
                 SendTCPDataToAll(_packet);
+            }
+        }
+
+        public static void SendChatMessage(int client, string _msg)
+        {
+            int user1 = GameLogic.lobbies[GameLogic.GetLobbyFromUserId(client)].User1.Id;
+            if(GameLogic.lobbies[GameLogic.GetLobbyFromUserId(client)].User2.Id == -1) { return; }
+            int user2 = GameLogic.lobbies[GameLogic.GetLobbyFromUserId(client)].User2.Id;
+            using (Packet _packet = new Packet((int)ServerPackets.chat))
+            {
+                _packet.Write(_msg);
+                SendTCPData(client == user1 ? user2:user1,_packet);
             }
         }
 
